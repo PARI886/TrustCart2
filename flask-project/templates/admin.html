@@ -1,0 +1,193 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container py-4">
+  <h3 class="fw-bold mb-4"><i class="bi bi-speedometer2 text-warning"></i> Admin Dashboard — TrustCart</h3>
+
+  <!-- MODULE 7: ADMIN STATS -->
+  <div class="row g-3 mb-5">
+    <div class="col-md-3">
+      <div class="card stat-card text-center p-3 h-100">
+        <div class="display-6 fw-bold text-dark">{{ stats['total_reviews'] }}</div>
+        <div class="text-muted">Total Reviews</div>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="card stat-card text-center p-3 h-100" style="background:#d4edda">
+        <div class="display-6 fw-bold text-success">{{ stats['genuine_reviews'] }}</div>
+        <div class="text-muted">Genuine Reviews</div>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="card stat-card text-center p-3 h-100" style="background:#f8d7da">
+        <div class="display-6 fw-bold text-danger">{{ stats['fake_reviews'] }}</div>
+        <div class="text-muted">Fake Reviews</div>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="card stat-card text-center p-3 h-100" style="background:#fff3cd">
+        <div class="display-6 fw-bold text-warning">{{ stats['fake_percentage'] }}%</div>
+        <div class="text-muted">Fake Percentage</div>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="card stat-card text-center p-3 h-100">
+        <div class="display-6 fw-bold">{{ stats['total_products'] }}</div>
+        <div class="text-muted">Total Products</div>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="card stat-card text-center p-3 h-100">
+        <div class="display-6 fw-bold">{{ stats['total_users'] }}</div>
+        <div class="text-muted">Registered Users</div>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="card stat-card text-center p-3 h-100" style="background:#cce5ff">
+        <div class="display-6 fw-bold text-primary">{{ stats['avg_trust_score'] }}</div>
+        <div class="text-muted">Avg Trust Score</div>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="card stat-card text-center p-3 h-100" style="background:#f8d7da">
+        <div class="display-6 fw-bold text-danger">{{ stats['high_risk_products'] }}</div>
+        <div class="text-muted">High-Risk Products</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- CHARTS ROW -->
+  <div class="row g-4 mb-5">
+    <div class="col-md-6">
+      <div class="card shadow-sm" style="border-radius:14px">
+        <div class="card-body">
+          <h6 class="fw-bold mb-3">Genuine vs Fake Reviews</h6>
+          <canvas id="reviewsChart" height="200"></canvas>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-6">
+      <div class="card shadow-sm" style="border-radius:14px">
+        <div class="card-body">
+          <h6 class="fw-bold mb-3">Review Distribution Pie</h6>
+          <canvas id="pieChart" height="200"></canvas>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- REVIEWS TABLE -->
+  <div class="card shadow-sm" style="border-radius:14px">
+    <div class="card-body">
+      <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+        <h5 class="fw-bold mb-0">Review Management</h5>
+        <div class="btn-group">
+          <a href="?filter=all" class="btn btn-sm {% if filter == 'all' %}btn-dark{% else %}btn-outline-dark{% endif %}">All</a>
+          <a href="?filter=genuine" class="btn btn-sm {% if filter == 'genuine' %}btn-success{% else %}btn-outline-success{% endif %}">Genuine</a>
+          <a href="?filter=fake" class="btn btn-sm {% if filter == 'fake' %}btn-danger{% else %}btn-outline-danger{% endif %}">Flagged Fake</a>
+        </div>
+      </div>
+
+      <div class="table-responsive">
+        <table class="table table-hover align-middle">
+          <thead class="table-dark">
+            <tr>
+              <th>ID</th>
+              <th>Product</th>
+              <th>Reviewer</th>
+              <th>Review</th>
+              <th>Rating</th>
+              <th>Status</th>
+              <th>Sentiment</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for r in reviews %}
+            <tr {% if r['is_fake'] %}class="table-danger"{% endif %}>
+              <td><small>#{{ r['id'] }}</small></td>
+              <td><small><strong>{{ r['product_name'] }}</strong></small></td>
+              <td>
+                <small>{{ r['reviewer_name'] }}</small>
+                {% if r['is_verified_purchase'] %}<br><span class="verified-badge"><i class="bi bi-patch-check-fill"></i></span>{% endif %}
+              </td>
+              <td style="max-width:220px">
+                <small>{{ r['review_text'][:80] }}{% if r['review_text']|length > 80 %}...{% endif %}</small>
+                {% if r['flag_reasons'] %}
+                <div class="flag-box mt-1" style="font-size:0.75rem">
+                  <i class="bi bi-exclamation-triangle"></i>
+                  {{ r['flag_reasons'].split(' | ')[0] }}
+                  {% if r['flag_reasons'].split(' | ')|length > 1 %}
+                  <span class="text-muted"> +{{ r['flag_reasons'].split(' | ')|length - 1 }} more</span>
+                  {% endif %}
+                </div>
+                {% endif %}
+              </td>
+              <td class="stars" style="font-size:0.9rem">{{ r['rating']|stars }}</td>
+              <td>
+                {% if r['is_removed'] %}
+                  <span class="badge bg-secondary">Removed</span>
+                {% elif r['is_fake'] %}
+                  <span class="badge badge-fake">🚫 Fake</span>
+                {% else %}
+                  <span class="badge badge-genuine">✅ Genuine</span>
+                {% endif %}
+              </td>
+              <td>
+                {% if r['sentiment'] == 'positive' %}
+                  <span class="badge bg-success">😊</span>
+                {% elif r['sentiment'] == 'negative' %}
+                  <span class="badge bg-danger">😞</span>
+                {% else %}
+                  <span class="badge bg-secondary">😐</span>
+                {% endif %}
+              </td>
+              <td>
+                {% if r['is_fake'] and not r['is_removed'] %}
+                <form method="POST" action="/admin/approve/{{ r['id'] }}?filter={{ filter }}" class="d-inline">
+                  <button class="btn btn-xs btn-outline-success py-0 px-2" style="font-size:0.75rem">✅ Approve</button>
+                </form>
+                {% endif %}
+                {% if not r['is_removed'] %}
+                <form method="POST" action="/admin/remove/{{ r['id'] }}?filter={{ filter }}" class="d-inline">
+                  <button class="btn btn-xs btn-outline-danger py-0 px-2" style="font-size:0.75rem">🗑 Remove</button>
+                </form>
+                {% endif %}
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  new Chart(document.getElementById('reviewsChart'), {
+    type: 'bar',
+    data: {
+      labels: ['Genuine Reviews', 'Fake Reviews'],
+      datasets: [{
+        data: [{{ stats['genuine_reviews'] }}, {{ stats['fake_reviews'] }}],
+        backgroundColor: ['#28a745', '#dc3545'],
+        borderRadius: 6,
+      }]
+    },
+    options: { plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } } }
+  });
+
+  new Chart(document.getElementById('pieChart'), {
+    type: 'doughnut',
+    data: {
+      labels: ['Genuine', 'Fake'],
+      datasets: [{
+        data: [{{ stats['genuine_reviews'] }}, {{ stats['fake_reviews'] }}],
+        backgroundColor: ['#28a745', '#dc3545'],
+      }]
+    },
+    options: { plugins: { legend: { position: 'bottom' } }, cutout: '60%' }
+  });
+</script>
+{% endblock %}

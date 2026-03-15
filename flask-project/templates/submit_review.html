@@ -1,0 +1,73 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container py-5" style="max-width:650px">
+  <nav aria-label="breadcrumb" class="mb-3">
+    <ol class="breadcrumb">
+      <li class="breadcrumb-item"><a href="/">Products</a></li>
+      <li class="breadcrumb-item"><a href="/product/{{ product['id'] }}">{{ product['name'] }}</a></li>
+      <li class="breadcrumb-item active">Write Review</li>
+    </ol>
+  </nav>
+
+  <div class="card shadow-sm" style="border-radius:16px">
+    <div class="card-body p-4">
+      <h4 class="fw-bold mb-1"><i class="bi bi-pencil-square text-primary"></i> Write a Review</h4>
+      <p class="text-muted mb-4">for <strong>{{ product['name'] }}</strong></p>
+
+      {% if error %}
+        <div class="alert alert-danger">{{ error }}</div>
+      {% endif %}
+
+      <form method="POST">
+        <div class="mb-3">
+          <label class="form-label fw-semibold">Your Name</label>
+          <input type="text" name="reviewer_name" class="form-control" placeholder="e.g. John D." required/>
+        </div>
+
+        <div class="mb-3">
+          <label class="form-label fw-semibold">Star Rating</label>
+          <div class="d-flex gap-2 mb-2">
+            {% for i in range(1,6) %}
+            <div class="form-check">
+              <input class="form-check-input" type="radio" name="rating" value="{{ i }}"
+                     id="r{{ i }}" {% if i == 5 %}checked{% endif %} required/>
+              <label class="form-check-label stars" for="r{{ i }}">{{ "★" * i }}</label>
+            </div>
+            {% endfor %}
+          </div>
+        </div>
+
+        <div class="mb-3">
+          <label class="form-label fw-semibold">Your Review</label>
+          <textarea name="review_text" class="form-control" rows="5"
+            placeholder="Share your honest experience with this product..." required></textarea>
+          <div class="form-text">Our system will automatically analyze your review for sentiment and authenticity signals.</div>
+        </div>
+
+        <div class="mb-4 form-check">
+          <input type="checkbox" class="form-check-input" name="verified" id="verified"/>
+          <label class="form-check-label" for="verified">
+            <i class="bi bi-patch-check-fill text-primary"></i> I have purchased this product (Verified Purchase)
+          </label>
+        </div>
+
+        <!-- MODULE PIPELINE PREVIEW -->
+        <div class="bg-light rounded-3 p-3 mb-4" style="font-size:0.85rem">
+          <strong>How your review will be processed:</strong>
+          <div class="row mt-2 g-2">
+            <div class="col-6"><span class="badge bg-primary me-1">1</span> Text Pre-Processing (tokenize, clean)</div>
+            <div class="col-6"><span class="badge bg-primary me-1">2</span> Feature Extraction (TF-IDF)</div>
+            <div class="col-6"><span class="badge bg-warning text-dark me-1">3</span> Fake Review Detection (9 rules)</div>
+            <div class="col-6"><span class="badge bg-info text-dark me-1">4</span> Sentiment Analysis</div>
+            <div class="col-12"><span class="badge bg-success me-1">5</span> Trust Score Recalculated for product</div>
+          </div>
+        </div>
+
+        <button type="submit" class="btn btn-success w-100 py-2 fw-bold">
+          <i class="bi bi-send"></i> Submit Review
+        </button>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}

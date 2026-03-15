@@ -1,0 +1,147 @@
+{% extends "base.html" %}
+{% block content %}
+
+<!-- HERO SECTION -->
+<div class="hero text-center">
+  <div class="container">
+    <h1 class="fw-bold display-5">Shop with <span style="color:#4a90e2">Absolute Confidence</span></h1>
+    <p class="lead mt-3 mb-4" style="color:#ccc">
+      We analyze every review using NLP and behavioral patterns to detect fakes<br>
+      and calculate a real <strong>Trust Score</strong> for every product.
+    </p>
+    <!-- Search Bar -->
+    <form method="GET" action="/" class="d-flex justify-content-center gap-2 flex-wrap">
+      <input type="text" name="search" value="{{ search }}" placeholder="Search products..."
+             class="form-control" style="max-width:350px"/>
+      <select name="category" class="form-select" style="max-width:180px">
+        <option value="">All Categories</option>
+        {% for cat in categories %}
+          <option value="{{ cat }}" {% if cat == selected_category %}selected{% endif %}>{{ cat }}</option>
+        {% endfor %}
+      </select>
+      <button type="submit" class="btn btn-primary"><i class="bi bi-search"></i> Search</button>
+    </form>
+  </div>
+</div>
+
+<!-- HOW IT WORKS STRIP -->
+<div class="container mb-5">
+  <div class="row text-center g-3">
+    <div class="col-md-3">
+      <div class="p-3 bg-white rounded-3 shadow-sm h-100">
+        <div style="font-size:2rem">🧹</div>
+        <h6 class="fw-bold mt-2">Text Pre-Processing</h6>
+        <small class="text-muted">Tokenize, remove stopwords, clean raw review text</small>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="p-3 bg-white rounded-3 shadow-sm h-100">
+        <div style="font-size:2rem">🔍</div>
+        <h6 class="fw-bold mt-2">Fake Detection</h6>
+        <small class="text-muted">9 rules: promo keywords, bursts, account age, behavioral patterns</small>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="p-3 bg-white rounded-3 shadow-sm h-100">
+        <div style="font-size:2rem">😊</div>
+        <h6 class="fw-bold mt-2">Sentiment Analysis</h6>
+        <small class="text-muted">Positive / Negative / Neutral classification of genuine reviews</small>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="p-3 bg-white rounded-3 shadow-sm h-100">
+        <div style="font-size:2rem">🛡️</div>
+        <h6 class="fw-bold mt-2">Trust Score</h6>
+        <small class="text-muted">Confidence-weighted score replaces misleading star ratings</small>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- PRODUCTS GRID -->
+<div class="container mb-5">
+  <h4 class="fw-bold mb-4">
+    <i class="bi bi-box-seam"></i> Products
+    <span class="text-muted fs-6 ms-2">({{ products|length }} found)</span>
+  </h4>
+  <div class="row g-4">
+    {% for p in products %}
+    <div class="col-md-6 col-lg-4">
+      <div class="card product-card h-100 shadow-sm" style="border-radius:14px;border:1px solid #e0e0e0">
+        <div class="card-body">
+          <!-- Category Badge -->
+          <span class="badge bg-secondary mb-2">{{ p['category'] }}</span>
+          <h5 class="card-title fw-bold">{{ p['name'] }}</h5>
+          <p class="text-muted mb-2">${{ "%.2f"|format(p['price']) }}</p>
+
+          <!-- TRUST SCORE -->
+          {% set ts = p['trust_score'] %}
+          <div class="mb-3 p-3 rounded-3
+            {% if ts >= 3.5 %}trust-high{% elif ts >= 2.0 %}trust-mid{% else %}trust-low{% endif %}">
+            <div class="d-flex justify-content-between align-items-center">
+              <span class="fw-bold">Trust Score</span>
+              <span class="trust-badge
+                {% if ts >= 3.5 %}trust-high{% elif ts >= 2.0 %}trust-mid{% else %}trust-low{% endif %}">
+                {{ "%.2f"|format(ts) }} / 5
+              </span>
+            </div>
+            <div class="progress mt-2" style="height:8px">
+              <div class="progress-bar
+                {% if ts >= 3.5 %}bg-success{% elif ts >= 2.0 %}bg-warning{% else %}bg-danger{% endif %}"
+                style="width:{{ (ts/5*100)|int }}%"></div>
+            </div>
+            <small class="d-block mt-1
+              {% if ts >= 3.5 %}text-success{% elif ts >= 2.0 %}text-warning{% else %}text-danger{% endif %}">
+              {% if ts >= 3.5 %}✅ High Trust{% elif ts >= 2.0 %}⚠️ Medium Trust{% else %}🚨 Low Trust{% endif %}
+            </small>
+          </div>
+
+          <!-- Review Stats -->
+          {% if p['total_reviews'] > 0 %}
+          <div class="row text-center g-2 mb-3">
+            <div class="col-4">
+              <div class="bg-light rounded-2 p-2">
+                <div class="fw-bold text-dark">{{ p['total_reviews'] }}</div>
+                <small class="text-muted">Total</small>
+              </div>
+            </div>
+            <div class="col-4">
+              <div class="bg-light rounded-2 p-2">
+                <div class="fw-bold text-success">{{ p['genuine_reviews'] }}</div>
+                <small class="text-muted">Genuine</small>
+              </div>
+            </div>
+            <div class="col-4">
+              <div class="bg-light rounded-2 p-2">
+                <div class="fw-bold text-danger">{{ p['fake_reviews'] }}</div>
+                <small class="text-muted">Fake</small>
+              </div>
+            </div>
+          </div>
+          <!-- Fake % bar -->
+          {% if p['total_reviews'] > 0 %}
+          <div class="mb-2">
+            <div class="d-flex justify-content-between mb-1">
+              <small class="text-muted">Genuine Reviews</small>
+              <small class="text-muted">{{ ((p['genuine_reviews'] / p['total_reviews']) * 100)|int }}%</small>
+            </div>
+            <div class="progress" style="height:6px">
+              <div class="progress-bar bg-success"
+                   style="width:{{ ((p['genuine_reviews'] / p['total_reviews']) * 100)|int }}%"></div>
+            </div>
+          </div>
+          {% endif %}
+          {% else %}
+          <p class="text-muted text-center"><small>No reviews yet</small></p>
+          {% endif %}
+
+          <a href="/product/{{ p['id'] }}" class="btn btn-primary w-100 mt-2">
+            <i class="bi bi-eye"></i> View Reviews & Trust Report
+          </a>
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+</div>
+{% endblock %}

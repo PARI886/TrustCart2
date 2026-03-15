@@ -1,0 +1,241 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container py-4">
+
+  <!-- BREADCRUMB -->
+  <nav aria-label="breadcrumb" class="mb-3">
+    <ol class="breadcrumb">
+      <li class="breadcrumb-item"><a href="/">Products</a></li>
+      <li class="breadcrumb-item active">{{ product['name'] }}</li>
+    </ol>
+  </nav>
+
+  <div class="row g-4">
+
+    <!-- LEFT: PRODUCT INFO + TRUST SCORE -->
+    <div class="col-lg-4">
+      <!-- Product Card -->
+      <div class="card shadow-sm mb-4" style="border-radius:14px">
+        <div class="card-body text-center p-4">
+          <span class="badge bg-secondary mb-2">{{ product['category'] }}</span>
+          <h4 class="fw-bold">{{ product['name'] }}</h4>
+          <p class="text-muted">${{ "%.2f"|format(product['price']) }}</p>
+          <hr/>
+
+          <!-- TRUST SCORE GAUGE -->
+          {% set ts = product['trust_score'] %}
+          <div class="p-3 rounded-3
+            {% if ts >= 3.5 %}trust-high{% elif ts >= 2.0 %}trust-mid{% else %}trust-low{% endif %} mb-3">
+            <div class="display-6 fw-bold">{{ "%.2f"|format(ts) }}</div>
+            <div class="small">out of 5.0</div>
+            <div class="fw-bold mt-1
+              {% if ts >= 3.5 %}text-success{% elif ts >= 2.0 %}text-warning{% else %}text-danger{% endif %}">
+              {% if ts >= 3.5 %}✅ HIGH TRUST{% elif ts >= 2.0 %}⚠️ MEDIUM TRUST{% else %}🚨 LOW TRUST{% endif %}
+            </div>
+            <div class="progress mt-2" style="height:10px">
+              <div class="progress-bar
+                {% if ts >= 3.5 %}bg-success{% elif ts >= 2.0 %}bg-warning{% else %}bg-danger{% endif %}"
+                style="width:{{ (ts/5*100)|int }}%"></div>
+            </div>
+          </div>
+
+          <!-- Trust Score Formula Explanation -->
+          <div class="text-start bg-light p-3 rounded-3 mb-3" style="font-size:0.82rem">
+            <strong>Trust Score Formula:</strong><br>
+            (Genuine / Total) × Avg Rating × Confidence Weight<br>
+            <span class="text-muted">
+              = ({{ product['genuine_reviews'] }}/{{ product['total_reviews'] }})
+              × {{ "%.2f"|format(product['avg_genuine_rating']) }}
+              × confidence
+            </span>
+          </div>
+
+          <!-- Review Stats -->
+          <div class="row g-2 text-center">
+            <div class="col-4">
+              <div class="bg-light rounded-2 py-2">
+                <div class="fw-bold">{{ product['total_reviews'] }}</div>
+                <small class="text-muted">Total</small>
+              </div>
+            </div>
+            <div class="col-4">
+              <div style="background:#d4edda" class="rounded-2 py-2">
+                <div class="fw-bold text-success">{{ product['genuine_reviews'] }}</div>
+                <small class="text-success">Genuine</small>
+              </div>
+            </div>
+            <div class="col-4">
+              <div style="background:#f8d7da" class="rounded-2 py-2">
+                <div class="fw-bold text-danger">{{ product['fake_reviews'] }}</div>
+                <small class="text-danger">Fake</small>
+              </div>
+            </div>
+          </div>
+
+          <!-- Fake % warning if high -->
+          {% if product['total_reviews'] > 0 and product['fake_reviews'] / product['total_reviews'] > 0.4 %}
+          <div class="alert alert-danger mt-3 mb-0 p-2" style="font-size:0.85rem">
+            🚨 <strong>High Risk!</strong> Over 40% of reviews flagged as fake.
+          </div>
+          {% endif %}
+        </div>
+      </div>
+
+      <!-- SENTIMENT BREAKDOWN (MODULE 5) -->
+      {% if product['total_reviews'] > 0 %}
+      <div class="card shadow-sm mb-4" style="border-radius:14px">
+        <div class="card-body">
+          <h6 class="fw-bold mb-3">😊 Sentiment Breakdown</h6>
+          <canvas id="sentimentChart" height="180"></canvas>
+          <div class="mt-3">
+            {% set total = product['sentiment_positive'] + product['sentiment_negative'] + product['sentiment_neutral'] %}
+            {% if total > 0 %}
+            <div class="mb-2">
+              <div class="d-flex justify-content-between mb-1">
+                <span class="text-success"><i class="bi bi-emoji-smile"></i> Positive</span>
+                <span>{{ ((product['sentiment_positive'] / total) * 100)|int }}%</span>
+              </div>
+              <div class="progress" style="height:8px">
+                <div class="progress-bar bg-success" style="width:{{ ((product['sentiment_positive'] / total) * 100)|int }}%"></div>
+              </div>
+            </div>
+            <div class="mb-2">
+              <div class="d-flex justify-content-between mb-1">
+                <span class="text-danger"><i class="bi bi-emoji-frown"></i> Negative</span>
+                <span>{{ ((product['sentiment_negative'] / total) * 100)|int }}%</span>
+              </div>
+              <div class="progress" style="height:8px">
+                <div class="progress-bar bg-danger" style="width:{{ ((product['sentiment_negative'] / total) * 100)|int }}%"></div>
+              </div>
+            </div>
+            <div>
+              <div class="d-flex justify-content-between mb-1">
+                <span class="text-secondary"><i class="bi bi-emoji-neutral"></i> Neutral</span>
+                <span>{{ ((product['sentiment_neutral'] / total) * 100)|int }}%</span>
+              </div>
+              <div class="progress" style="height:8px">
+                <div class="progress-bar bg-secondary" style="width:{{ ((product['sentiment_neutral'] / total) * 100)|int }}%"></div>
+              </div>
+            </div>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+      {% endif %}
+
+      <!-- WRITE REVIEW BUTTON -->
+      <a href="/submit-review/{{ product['id'] }}" class="btn btn-success w-100 py-2">
+        <i class="bi bi-pencil-square"></i> Write a Review
+      </a>
+    </div>
+
+    <!-- RIGHT: REVIEWS LIST -->
+    <div class="col-lg-8">
+      <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+        <h5 class="fw-bold mb-0">
+          <i class="bi bi-chat-left-text"></i> Reviews
+        </h5>
+        <div class="btn-group">
+          <a href="?filter=all" class="btn btn-sm {% if filter == 'all' %}btn-dark{% else %}btn-outline-dark{% endif %}">All</a>
+          <a href="?filter=genuine" class="btn btn-sm {% if filter == 'genuine' %}btn-success{% else %}btn-outline-success{% endif %}">Genuine</a>
+          <a href="?filter=fake" class="btn btn-sm {% if filter == 'fake' %}btn-danger{% else %}btn-outline-danger{% endif %}">Fake</a>
+        </div>
+      </div>
+
+      {% if reviews %}
+        {% for r in reviews %}
+        <div class="card review-card shadow-sm {% if r['is_fake'] %}border-danger{% endif %}">
+          <div class="card-body">
+            <div class="d-flex justify-content-between align-items-start flex-wrap gap-2">
+              <div>
+                <span class="fw-bold">{{ r['reviewer_name'] }}</span>
+                {% if r['is_verified_purchase'] %}
+                  <span class="verified-badge ms-2"><i class="bi bi-patch-check-fill"></i> Verified Purchase</span>
+                {% endif %}
+                <div class="stars">{{ r['rating']|stars }}</div>
+              </div>
+              <div class="d-flex flex-column align-items-end gap-1">
+                {% if r['is_fake'] %}
+                  <span class="badge badge-fake">🚫 FAKE</span>
+                {% else %}
+                  <span class="badge badge-genuine">✅ GENUINE</span>
+                {% endif %}
+                {% if r['sentiment'] == 'positive' %}
+                  <span class="badge bg-success bg-opacity-75">😊 Positive</span>
+                {% elif r['sentiment'] == 'negative' %}
+                  <span class="badge bg-danger bg-opacity-75">😞 Negative</span>
+                {% else %}
+                  <span class="badge bg-secondary bg-opacity-75">😐 Neutral</span>
+                {% endif %}
+              </div>
+            </div>
+
+            <p class="mt-2 mb-2">{{ r['review_text'] }}</p>
+
+            <!-- MODULE 2: Processed Tokens -->
+            {% if r['processed_tokens'] %}
+            <div class="text-muted mb-2" style="font-size:0.78rem">
+              <i class="bi bi-cpu"></i> <strong>Processed tokens:</strong> {{ r['processed_tokens'] }}
+            </div>
+            {% endif %}
+
+            <!-- MODULE 4: Flag Reasons (WHY it was flagged) -->
+            {% if r['is_fake'] and r['flag_reasons'] %}
+            <div class="flag-box">
+              <strong><i class="bi bi-exclamation-triangle"></i> Why flagged as fake:</strong>
+              <ul class="mb-0 mt-1 ps-3">
+                {% for reason in r['flag_reasons'].split(' | ') %}
+                  {% if reason.strip() %}
+                  <li>{{ reason }}</li>
+                  {% endif %}
+                {% endfor %}
+              </ul>
+            </div>
+            {% endif %}
+
+            <!-- Reviewer Credibility -->
+            <div class="d-flex justify-content-between align-items-center mt-2">
+              <div style="min-width:160px">
+                <small class="text-muted">Reviewer Credibility: {{ r['reviewer_credibility']|int }}%</small>
+                <div class="credibility-bar mt-1">
+                  <div class="credibility-fill" style="width:{{ r['reviewer_credibility']|int }}%"></div>
+                </div>
+              </div>
+              <div class="d-flex align-items-center gap-2">
+                <small class="text-muted">{{ r['helpful_votes'] }} found helpful</small>
+                <form method="POST" action="/helpful/{{ r['id'] }}" class="d-inline">
+                  <button type="submit" class="btn btn-outline-secondary btn-sm py-0 px-2">
+                    <i class="bi bi-hand-thumbs-up"></i> Helpful
+                  </button>
+                </form>
+              </div>
+            </div>
+          </div>
+        </div>
+        {% endfor %}
+      {% else %}
+        <div class="alert alert-info">No reviews found for this filter.</div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  const ctx = document.getElementById('sentimentChart');
+  if (ctx) {
+    new Chart(ctx, {
+      type: 'pie',
+      data: {
+        labels: ['Positive', 'Negative', 'Neutral'],
+        datasets: [{
+          data: [{{ product['sentiment_positive'] }}, {{ product['sentiment_negative'] }}, {{ product['sentiment_neutral'] }}],
+          backgroundColor: ['#28a745', '#dc3545', '#6c757d'],
+        }]
+      },
+      options: { plugins: { legend: { position: 'bottom' } } }
+    });
+  }
+</script>
+{% endblock %}

@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>TrustCart – Fake Review Detection</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet"/>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" rel="stylesheet"/>
+  <style>
+    body { background: #f8f9fa; font-family: 'Segoe UI', sans-serif; }
+    .navbar { background: #1a1f2e !important; }
+    .navbar-brand { font-weight: 700; font-size: 1.4rem; color: #4a90e2 !important; }
+    .trust-badge { font-size: 1.1rem; font-weight: 700; padding: 6px 14px; border-radius: 20px; }
+    .trust-high  { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+    .trust-mid   { background: #fff3cd; color: #856404; border: 1px solid #ffeeba; }
+    .trust-low   { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+    .review-card { border-radius: 12px; border: 1px solid #e0e0e0; margin-bottom: 16px; }
+    .badge-genuine { background-color: #28a745; }
+    .badge-fake    { background-color: #dc3545; }
+    .verified-badge { color: #007bff; font-size: 0.8rem; }
+    .flag-box { background: #fff3cd; border-left: 4px solid #ffc107; padding: 10px 14px;
+                border-radius: 0 8px 8px 0; margin-top: 8px; font-size: 0.85rem; }
+    .sentiment-bar { height: 10px; border-radius: 5px; }
+    .stars { color: #f4c430; font-size: 1.2rem; letter-spacing: 2px; }
+    .hero { background: linear-gradient(135deg, #1a1f2e 0%, #2d3748 100%);
+            color: white; padding: 60px 0 40px; margin-bottom: 40px; }
+    .product-card:hover { transform: translateY(-3px); transition: 0.2s; box-shadow: 0 8px 24px rgba(0,0,0,.12); }
+    .credibility-bar { height: 6px; border-radius: 3px; background: #e0e0e0; }
+    .credibility-fill { height: 100%; border-radius: 3px; background: #4a90e2; }
+    .stat-card { border-radius: 12px; border: none; box-shadow: 0 2px 12px rgba(0,0,0,.08); }
+    footer { background: #1a1f2e; color: #aaa; padding: 30px 0; margin-top: 60px; }
+  </style>
+</head>
+<body>
+
+<nav class="navbar navbar-expand-lg navbar-dark">
+  <div class="container">
+    <a class="navbar-brand" href="/"><i class="bi bi-shield-check"></i> TrustCart</a>
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#nav">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+    <div class="collapse navbar-collapse" id="nav">
+      <ul class="navbar-nav ms-auto align-items-center">
+        <li class="nav-item"><a class="nav-link" href="/">Products</a></li>
+        {% if session.user %}
+          {% if session.user.role == 'admin' %}
+            <li class="nav-item"><a class="nav-link text-warning" href="/admin"><i class="bi bi-gear"></i> Admin</a></li>
+          {% endif %}
+          <li class="nav-item"><a class="nav-link" href="/logout"><i class="bi bi-box-arrow-right"></i> Logout ({{ session.user.username }})</a></li>
+        {% else %}
+          <li class="nav-item"><a class="nav-link" href="/login">Sign In</a></li>
+          <li class="nav-item ms-2"><a class="btn btn-primary btn-sm" href="/register">Register</a></li>
+        {% endif %}
+      </ul>
+    </div>
+  </div>
+</nav>
+
+{% block content %}{% endblock %}
+
+<footer>
+  <div class="container text-center">
+    <p class="mb-1"><strong class="text-white">TrustCart</strong> — Fake Review Detection System</p>
+    <small>College Project | Design Thinking Innovation | Fake Review Detection + Trust Score</small>
+  </div>
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+{% block scripts %}{% endblock %}
+</body>
+</html>
